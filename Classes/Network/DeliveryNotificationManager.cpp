@@ -113,7 +113,7 @@ InFlightPacket*	DeliveryNotificationManager::writeState(BytesT& buf) {
 
 bool DeliveryNotificationManager::readAndProcessState(uint8_t* &p) {
     bool res = processSeqNumber(p);
-    if(m_shouldSendAcks) {
+    if(m_shouldProcessAcks) {
         processAcks(p);
     }
     return res;

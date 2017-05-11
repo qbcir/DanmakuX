@@ -11,12 +11,14 @@
 #include "CCLuaEngine.h"
 #include <chrono>
 
+class LevelLayer;
 class GameManager {
 public:
   static GameManager* getInstance();
   static int getPlatform();
   void releaseInstance();
   void start();
+  void update(float dt);
   ObjectManager* getObjectManager();
   InputManager* getInputManager();
   CollisionManager* getCollisionManager();
@@ -30,6 +32,9 @@ public:
   void writeStringToFile(const std::string& filename,
                          const std::string& content);
   float getTime();
+  float getFrameStartTime() const;
+  void setLevelLayer(LevelLayer* ll);
+  LevelLayer* getLevelLayer();
 private:
   GameManager();
   ~GameManager();
@@ -48,8 +53,10 @@ private:
   cocos2d::LuaStack* m_luaStack = nullptr;
   GameDesc* m_gameDesc = nullptr;
   SceneDesc* m_currSceneDesc = nullptr;
+  LevelLayer* m_currLevelLayer = nullptr;
   std::unordered_map<std::string, SceneDesc*> m_sceneDescs;
   std::chrono::high_resolution_clock::time_point m_startTime;
+  float m_frameStartTime;
 };
 
 #endif /* __danmakuX_GameManager_h__ */

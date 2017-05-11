@@ -279,7 +279,7 @@ cocos2d::Action* ActionRefDesc::getAction() {
         auto objMgr = ObjectManager::getInstance();
         auto actionDesc = objMgr->getActionDesc(m_label);
         CCASSERT(actionDesc != nullptr, cocos2d::StringUtils::format(
-            "'ObjectManagers' return nil for %s action reference", m_label.c_str()));
+            "'ObjectManagers' return nil for %s action reference", m_label.c_str()).c_str());
         auto inner = actionDesc->getAction();
         tgt->runAction(inner);
     });
@@ -548,7 +548,7 @@ cocos2d::Action* PlaceObjectRefDesc::getAction() {
         auto objMgr = ObjectManager::getInstance();
         auto objDesc = objMgr->getGameObjectDesc(m_label);
         CCASSERT(objDesc != nullptr, cocos2d::StringUtils::format(
-            "No 'GameObject' defined for %s", m_label.c_str()));
+            "No 'GameObject' defined for %s", m_label.c_str()).c_str());
         auto go = GameObject::createFromDesc(objDesc);
         CCASSERT(go != nullptr, "Can't create 'GameObject' from 'GameObjectDesc'");
         this->placeObject(go, tgt);
@@ -563,6 +563,8 @@ void PlaceDescBase::placeObject(GameObject* obj, cocos2d::Node* tgt) {
         obj->addComponent(comp);
     }
     if (auto pobj = dynamic_cast<GameObject*>(tgt)) {
+        auto ll = pobj->getLevelLayer();
+        ll->createPhysBody(obj);
         auto rPos = m_position->eval();
         auto bbox = cocos2d::utils::getCascadeBoundingBox(pobj);
         rPos = cocos2d::Vec2(-bbox.size.width/2 + rPos.x,
@@ -590,7 +592,6 @@ void PlaceDescBase::placeObject(GameObject* obj, cocos2d::Node* tgt) {
             }
             pobj->addChild(obj, m_zOrder);
         } else {
-            auto ll = static_cast<LevelLayer*>(pobj->getParent());
             ll->addObject(obj);
         }
     } else if (auto ll = dynamic_cast<LevelLayer*>(tgt)) {
@@ -598,6 +599,7 @@ void PlaceDescBase::placeObject(GameObject* obj, cocos2d::Node* tgt) {
         auto vel = cocos2d::Vec2(1, 0);
         auto direction = this->evalDirection(pos, nullptr);
         auto speed = this->evalSpeed(nullptr);
+        ll->createPhysBody(obj);
         vel *= speed;
         vel.rotate(cocos2d::Vec2::ZERO, CC_DEGREES_TO_RADIANS(direction));
         obj->setVelocity(vel);
@@ -605,7 +607,6 @@ void PlaceDescBase::placeObject(GameObject* obj, cocos2d::Node* tgt) {
         if (m_orientation) {
             obj->setRotation(m_orientation->eval());
         }
-
         ll->addObject(obj);
     }
 }
@@ -628,10 +629,10 @@ cocos2d::Action* PlaceVehicleRefDesc::getAction() {
     auto action = cocos2d::CallFuncN::create([=](cocos2d::Node* tgt) {
         auto objMgr = ObjectManager::getInstance();
         auto vDesc = objMgr->getVehicleDesc(m_label);
-        CCASSERT(vDesc != nullptr, cocos2d::StringUtils::format(
-            "No 'VehicleDesc' defined for '%s'", m_label.c_str()));
+        //CCASSERT(vDesc != nullptr, cocos2d::StringUtils::format(
+        //    "No 'VehicleDesc' defined for '%s'", m_label.c_str()).c_str());
         auto v = Vehicle::createFromDesc(vDesc);
-        CCASSERT(v != nullptr, "Can't create 'Vehicle' from 'VehicleDesc'");
+        //CCASSERT(v != nullptr, "Can't create 'Vehicle' from 'VehicleDesc'");
         this->placeObject(v, tgt);
     });
     return action;
@@ -656,7 +657,7 @@ cocos2d::Action* FireBulletRefDesc::getAction() {
         auto objMgr = ObjectManager::getInstance();
         auto bDesc = objMgr->getBulletDesc(m_label);
         CCASSERT(bDesc != nullptr, cocos2d::StringUtils::format(
-            "No 'BulletDesc' defined for '%s'", m_label.c_str()));
+            "No 'BulletDesc' defined for '%s'", m_label.c_str()).c_str());
         auto b = Bullet::createFromDesc(bDesc);
         CCASSERT(b != nullptr, "Can't create 'Bullet' from 'BulletDesc'");
         this->placeObject(b, tgt);

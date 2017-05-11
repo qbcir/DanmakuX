@@ -2,6 +2,7 @@
 #define INPUTPACKET_H
 
 #include <cstdint>
+#include "../Input/KeyboardManager.h"
 
 struct InputPacket {
 public:
@@ -15,6 +16,8 @@ public:
     uint64_t mouseState;
     float timestamp;
     float delta;
+    bool processed = false;
+    bool isKeyPressed(InputKey key) const;
 };
 
 #endif // INPUTPACKET_H

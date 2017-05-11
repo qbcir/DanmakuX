@@ -49,6 +49,11 @@ bool dx_json_checkType(const rapidjson::Value &el) {
     return el.IsArray();
 }
 
+template<typename T, DX_ENABLE_IF_IS_MAP(T)>
+bool dx_json_checkType(const rapidjson::Value &el) {
+    return el.IsObject();
+}
+
 template<>
 inline bool dx_json_checkType<std::string>(const rapidjson::Value &el) {
     return el.IsString();
@@ -113,6 +118,20 @@ DX_ENABLE_IF_IS_VEC_TYPE(VecT) parseEl(const rapidjson::Value &el) {
     for (auto it = el.Begin(); it != end_it; ++it) {
         auto v = parseEl<T>(*it);
         vs.emplace_back(v);
+    }
+    return vs;
+}
+
+template<typename MapT>
+DX_ENABLE_IF_IS_MAP_TYPE(MapT) parseEl(const rapidjson::Value &el) {
+    typedef typename MapT::key_type K;
+    typedef typename MapT::mapped_type V;
+    MapT vs;
+    auto end_it = el.MemberEnd();
+    for (auto it = el.MemberBegin(); it != end_it; ++it) {
+        auto k = parseEl<K>(it->name);
+        auto v = parseEl<V>(it->value);
+        vs[k] = v;
     }
     return vs;
 }

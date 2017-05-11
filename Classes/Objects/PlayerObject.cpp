@@ -1,5 +1,8 @@
 #include "PlayerObject.h"
 #include "../Data/PlayerDesc.h"
+#include "../Data/DataParser.h"
+#include "../InputManager.h"
+#include "../GameManager.h"
 
 PlayerObject* PlayerObject::createFromDesc(PlayerDesc* desc) {
     auto po = new (std::nothrow) PlayerObject();
@@ -41,8 +44,39 @@ PlayerObject::~PlayerObject() {
 void PlayerObject::update(float dt) {
     Vehicle::update(dt);
     auto pos = getPosition();
-    pos.clamp(m_minPos, m_maxPos);
+    //pos.clamp(m_minPos, m_maxPos);
     setPosition(pos);
+    if (m_lastInputPacket) {
+        m_lastInputPacket->delta += dt;
+    }
+    auto im = InputManager::getInstance();
+    auto pp = im->getPendingInput();
+    if (pp) {
+        if (m_lastInputPacket) {
+            m_lastInputPacket->processed = true;
+        }
+        m_lastInputPacket = pp;
+        auto& p = *pp;
+        float rot = 0;
+        float currRot = this->getRotation();
+        if (p.isKeyPressed(InputKey::LEFT)) {
+            rot = -20;
+        } else if (p.isKeyPressed(InputKey::RIGHT)) {
+            rot = 20;
+        }
+        this->setAngularSpeed(rot);
+        if (p.isKeyPressed(InputKey::UP)) {
+            cocos2d::Vec2 speed(0, 30);
+            speed.rotate(cocos2d::Vec2::ZERO, -CC_DEGREES_TO_RADIANS(currRot));
+            this->setVelocity(-speed);
+        } else if (p.isKeyPressed(InputKey::DOWN)) {
+            cocos2d::Vec2 speed(0, 30);
+            speed.rotate(cocos2d::Vec2::ZERO, -CC_DEGREES_TO_RADIANS(currRot));
+            this->setVelocity(speed);
+        } else {
+            this->setVelocity(cocos2d::Vec2::ZERO);
+        }
+    }
 }
 
 void PlayerObject::switchNextWeapon() {
@@ -114,4 +148,42 @@ void PlayerObject::setMaxPos(float x, float y) {
 
 float PlayerObject::getDirection() const {
     return 90;
+}
+
+GameObjectState PlayerObject::readStateBytes(uint8_t* &p) {
+    auto old = GameObject::readStateBytes(p);
+    auto pos = getPosition();
+    auto rot = getRotation();
+    /*
+    auto im = InputManager::getInstance();
+    auto& ipl = im->getInputPacketList();
+    auto& uipl = ipl.getInputPackets();
+    for (auto& p : uipl) {
+        //cocos2d::log("replay ts=%f dt=%f", p.timestamp, p.delta);
+        float angV = 0;
+        if (p.isKeyPressed(InputKey::LEFT)) {
+            angV = -20;
+        } else if (p.isKeyPressed(InputKey::RIGHT)) {
+            angV = 20;
+        }
+        this->setAngularSpeed(angV);
+        if (p.isKeyPressed(InputKey::UP)) {
+            cocos2d::Vec2 speed(0, 30);
+            speed.rotate(cocos2d::Vec2::ZERO, -CC_DEGREES_TO_RADIANS(rot));
+            this->setVelocity(-speed);
+        } else if (p.isKeyPressed(InputKey::DOWN)) {
+            cocos2d::Vec2 speed(0, 30);
+            speed.rotate(cocos2d::Vec2::ZERO, -CC_DEGREES_TO_RADIANS(rot));
+            this->setVelocity(speed);
+        } else {
+            this->setVelocity(cocos2d::Vec2::ZERO);
+        }
+        pos += m_velocity * p.delta;
+        rot += m_rotation * p.delta;
+        //cocos2d::log("ts=%f dt=%f replay pos.x=%f pos.y=%f", p.timestamp, p.delta, pos.x, pos.y);
+    }
+    */
+    setPosition(pos);
+    setRotation(rot);
+    return old;
 }

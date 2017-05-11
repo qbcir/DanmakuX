@@ -25,9 +25,6 @@ cmake_policy(SET CMP0017 NEW)
 
 cmake_minimum_required(VERSION 2.8)
 
-set(CMAKE_C_COMPILER_WORKS 1)
-set(CMAKE_CXX_COMPILER_WORKS 1)
-
 set(APP_NAME DanmakuXDemo)
 project (${APP_NAME})
 
@@ -39,6 +36,9 @@ include(CocosBuildHelpers)
 # libcocos2d
 set(BUILD_CPP_TESTS OFF CACHE BOOL "turn off build cpp-tests")
 set(BUILD_LUA_LIBS ON)
+set(USE_BOX2D ON)
+set(USE_CHIPMUNK OFF)
+set(USE_BULLET OFF)
 set(BUILD_JS_LIBS OFF CACHE BOOL "turn off build js related targets")
 add_subdirectory(${COCOS2D_ROOT})
 
@@ -181,6 +181,7 @@ set(COMMON_SRC
     Classes/Input/FreeMovementInputComponent.cpp
     Classes/Input/TurretInputComponent.cpp
     Classes/Input/InputComponent.cpp
+    Classes/Input/InputPacketComponent.cpp
     # Objects
     Classes/Objects/GameObject.cpp
     Classes/Objects/PlayerObject.cpp
@@ -257,7 +258,7 @@ else()
   endif ( WIN32 )
 endif()
 
-target_link_libraries(${APP_NAME} luacocos2d)
+target_link_libraries(${APP_NAME} luacocos2d box2d)
 
 set(APP_BIN_DIR "${CMAKE_BINARY_DIR}/bin")
 

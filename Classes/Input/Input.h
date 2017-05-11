@@ -7,5 +7,6 @@
 #include "TouchInputComponent.h"
 #include "MouseManager.h"
 #include "KeyboardManager.h"
+#include "InputComponent.h"
 
 #endif // __dx_INPUT_H__

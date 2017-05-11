@@ -8,6 +8,7 @@
 enum class PacketType : packet_t {
     HELLO,
     WELCOME,
+    CREATE,
     INPUT,
     STATE,
     INVALID

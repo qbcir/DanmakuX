@@ -12,6 +12,10 @@ InputPacket::InputPacket(
     delta(delta_)
 {}
 
+bool InputPacket::isKeyPressed(InputKey key) const {
+    return (keyboardState >> static_cast<uint8_t>(key)) & 1;
+}
+
 DX_DEF_STRUCT_P(InputPacket)
 DX_ADD_FIELD_P(InputPacket, keyboardState)
 DX_ADD_FIELD_P(InputPacket, mouseState)

@@ -8,6 +8,7 @@
 #include "DeliveryNotificationManager.h"
 #include "../Objects/GameObject.h"
 #include "UDPSocket.h"
+#include "InputPacket.h"
 
 enum class ReplicaActionType : uint8_t {
     CREATE,
@@ -33,6 +34,7 @@ public:
     void start();
     void step();
     void stop();
+    float getRoundTripTime() const;
     void pushPacket(const Packet& packet);
     GameObject* getGameObject(net_id_t netId);
     void addGameObject(GameObject* obj);
@@ -55,6 +57,8 @@ private:
     void processPacket(uint8_t* &p);
     void updateBytesSentLastFrame();
     //
+    float m_lastRoundTripTime;
+    float m_lastSentTimestamp = -1.f;
     float m_lastProcessedInputPacketTimestamp;
     //
     LevelLayer* m_stage = nullptr;
@@ -69,9 +73,10 @@ private:
     std::thread m_netThread;
     std::mutex m_mutex;
     std::queue<Packet> m_packets;
-    size_t m_maxPacketsPerFrame = 16;
+    size_t m_maxPacketsPerFrame = 256;
     cocos2d::Map<net_id_t, GameObject*> m_netId2GameObjectMap;
     DeliveryNotificationManager	m_deliveryNotificationMgr;
+    WeightedTimedMovingAverage m_avgRoundTripTime;
 };
 
 #endif /* __dx_NETWORKMANAGER_H__ */

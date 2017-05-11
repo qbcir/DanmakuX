@@ -10,7 +10,7 @@ class UDPSocket {
 public:
     UDPSocket(asio::io_service& io,
               const std::string& host,
-              ushort port,
+              unsigned short port,
               bool& stopFlag);
     void run();
     void send(const std::vector<uint8_t> &buf);
@@ -20,7 +20,7 @@ protected:
     bool& m_stopFlag;
     asio::io_service& m_io;
     std::string m_remoteHost;
-    ushort m_remotePort;
+    unsigned short m_remotePort;
     asio::ip::udp::endpoint m_endpoint;
     asio::ip::udp::endpoint m_remoteEndpoint;
     asio::ip::udp::resolver m_resolver;
@@ -28,8 +28,8 @@ protected:
     std::vector<uint8_t> m_buf;
     NetworkManager* m_networkManager = nullptr;
     //
-    WeightedTimedMovingAverage m_nbytesReceivedPerSec;
-    WeightedTimedMovingAverage m_nbytesSentPerSec;
+    //WeightedTimedMovingAverage m_nbytesReceivedPerSec;
+    //WeightedTimedMovingAverage m_nbytesSentPerSec;
 };
 
 #endif // CLIENT_H

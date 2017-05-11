@@ -21,7 +21,7 @@ static int lua_danmakux_PlayerObject_addOnPlayerDestroyCb(lua_State* L) {
 
 #if COCOS2D_DEBUG >= 1
     tolua_Error tolua_err;
-    if (!tolua_isusertype(L,1,"dx.PlayerObject",0,&tolua_err)) goto tolua_lerror;
+    if (!tolua_isusertype(L,1,"PlayerObject",0,&tolua_err)) goto tolua_lerror;
 #endif
 
     self = static_cast<PlayerObject*>(tolua_tousertype(L,1,0));
@@ -76,7 +76,7 @@ static int lua_danmakux_Vehicle_addOnHealthChangeCb(lua_State* L) {
 
 #if COCOS2D_DEBUG >= 1
     tolua_Error tolua_err;
-    if (!tolua_isusertype(L,1,"dx.Vehicle",0,&tolua_err)) goto tolua_lerror;
+    if (!tolua_isusertype(L,1,"Vehicle",0,&tolua_err)) goto tolua_lerror;
 #endif
 
     self = static_cast<Vehicle*>(tolua_tousertype(L,1,0));
@@ -132,7 +132,7 @@ static int lua_danmakux_KeyboardManager_addOnKeyUpCb(lua_State* L) {
 
 #if COCOS2D_DEBUG >= 1
     tolua_Error tolua_err;
-    if (!tolua_isusertype(L,1,"dx.KeyboardManager",0,&tolua_err)) goto tolua_lerror;
+    if (!tolua_isusertype(L,1,"KeyboardManager",0,&tolua_err)) goto tolua_lerror;
 #endif
 
     self = static_cast<KeyboardManager*>(tolua_tousertype(L,1,0));
@@ -150,7 +150,7 @@ static int lua_danmakux_KeyboardManager_addOnKeyUpCb(lua_State* L) {
     {
 #if COCOS2D_DEBUG >= 1
         if (!toluafix_isfunction(L,3,"LUA_FUNCTION",0,&tolua_err) ||
-            !tolua_isint(L,2,0,&tolua_err))
+            !tolua_isnumber(L,2,0,&tolua_err))
         {
             goto tolua_lerror;
         }
@@ -188,7 +188,7 @@ static int lua_danmakux_KeyboardManager_addOnKeyDownCb(lua_State* L) {
 
 #if COCOS2D_DEBUG >= 1
     tolua_Error tolua_err;
-    if (!tolua_isusertype(L,1,"dx.KeyboardManager",0,&tolua_err)) goto tolua_lerror;
+    if (!tolua_isusertype(L,1,"KeyboardManager",0,&tolua_err)) goto tolua_lerror;
 #endif
 
     self = static_cast<KeyboardManager*>(tolua_tousertype(L,1,0));
@@ -206,7 +206,7 @@ static int lua_danmakux_KeyboardManager_addOnKeyDownCb(lua_State* L) {
     {
 #if COCOS2D_DEBUG >= 1
         if (!toluafix_isfunction(L,3,"LUA_FUNCTION",0,&tolua_err) ||
-            !tolua_isint(L,2,0,&tolua_err))
+            !tolua_isnumber(L,2,0,&tolua_err))
         {
             goto tolua_lerror;
         }
@@ -281,6 +281,9 @@ static int lua_danmakux_##klass##_create(lua_State* L) { \
 #endif
 
 #define DX_FOR_EACH_DESC_CLASS() \
+    PROCESS_DESC_CLASS(SpritePCGLayerDesc) \
+    PROCESS_DESC_CLASS(BulletDesc) \
+    PROCESS_DESC_CLASS(PlayerDesc) \
     PROCESS_DESC_CLASS(VehicleDesc) \
     PROCESS_DESC_CLASS(ForeverDesc) \
     PROCESS_DESC_CLASS(RepeatDesc) \

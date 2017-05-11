@@ -33,6 +33,16 @@ struct dx_is_vec<std::vector<T>> {
 };
 
 template<typename T>
+struct dx_is_map {
+    static const bool value = false;
+};
+
+template<typename K, typename V>
+struct dx_is_map<std::unordered_map<K,V>> {
+    static const bool value = true;
+};
+
+template<typename T>
 struct dx_is__vec {
     static const bool value = dx_is_ref_vec<T>::value || dx_is_vec<T>::value;
 };
@@ -68,6 +78,7 @@ struct dx_is_class {
             && !dx_is_func<T>::value
             && !dx_is_ref_vec<T>::value
             && !dx_is_vec<T>::value
+            && !dx_is_map<T>::value
             && !dx_is_cc_value<T>::value
             && !dx_is_cc_value_vec<T>::value
             && !dx_is_cc_value_map<T>::value;
@@ -93,6 +104,8 @@ struct dx_is_class {
     typename std::enable_if<dx_is_ref_vec<T>::value, T>::type
 #define DX_ENABLE_IF_IS_VEC_TYPE(T) \
     typename std::enable_if<dx_is_vec<T>::value, T>::type
+#define DX_ENABLE_IF_IS_MAP_TYPE(T) \
+    typename std::enable_if<dx_is_map<T>::value, T>::type
 #define DX_ENABLE_IF_IS_CC_VALUE_TYPE(T) \
     typename std::enable_if<dx_is_cc_value<T>::value, T>::type
 #define DX_ENABLE_IF_IS_CC_VALUE_VEC_TYPE(T) \
@@ -119,6 +132,8 @@ struct dx_is_class {
     DX_ENABLE_IF_IS_REF_VEC_TYPE(T)* = nullptr
 #define DX_ENABLE_IF_IS_VEC(T) \
     DX_ENABLE_IF_IS_VEC_TYPE(T)* = nullptr
+#define DX_ENABLE_IF_IS_MAP(T) \
+    DX_ENABLE_IF_IS_MAP_TYPE(T)* = nullptr
 #define DX_ENABLE_IF_IS_CC_VALUE(T) \
     DX_ENABLE_IF_IS_CC_VALUE_TYPE(T)* = nullptr
 #define DX_ENABLE_IF_IS_CC_VALUE_VEC(T) \

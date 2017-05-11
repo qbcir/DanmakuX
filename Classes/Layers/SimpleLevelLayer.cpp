@@ -54,5 +54,6 @@ bool SimpleLevelLayer::initWithSimpleLevelDesc(SimpleLevelDesc* levelDesc) {
     for (auto bgSp : m_bgSprites) {
         this->addChild(bgSp);
     }
+    m_worldBounds.setRect(0, 0, m_winSize.width, m_winSize.height);
     return true;
 }

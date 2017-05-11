@@ -4,6 +4,7 @@
 #include "cocos2d.h"
 #include "GameAction.h"
 #include "Data/Data.h"
+#include "Objects/GameObject.h"
 
 #define DX_OM_DEF_DESC_MAP(klass, member) cocos2d::Map<std::string, klass*> member
 #define DX_OM_DEF_GET_DESC_FUNC(klass) klass* get##klass (const std::string& label) const
@@ -25,17 +26,21 @@ public:
     DX_OM_DEF_DESC_FUNCS(BulletDesc)
     DX_OM_DEF_DESC_FUNCS(VehicleDesc)
     DX_OM_DEF_DESC_FUNCS(ParticleDesc)
+    DX_OM_DEF_DESC_FUNCS(PlayerDesc)
     DX_OM_DEF_DESC_FUNCS(GameObjectDesc)
 
     void clearDescriptions();
     PlayerDesc* getPlayerDesc();
+    void setPlayerDesc(PlayerDesc* playerDesc);
+    GameObject* createObject(const std::string& key, GameObjectType objType);
 protected:
     DX_OM_DEF_DESC_MAP(ActionDesc, m_actionDescs);
     DX_OM_DEF_DESC_MAP(BulletDesc, m_bulletDescs);
     DX_OM_DEF_DESC_MAP(VehicleDesc, m_vehicleDescs);
+    DX_OM_DEF_DESC_MAP(PlayerDesc, m_playerDescs);
     DX_OM_DEF_DESC_MAP(ParticleDesc, m_particleDescs);
     DX_OM_DEF_DESC_MAP(GameObjectDesc, m_objDescs);
-    PlayerDesc m_playerDesc;
+    PlayerDesc* m_playerDesc = nullptr;
 };
 
 #endif /* __dx_ObjectManager_h__ */

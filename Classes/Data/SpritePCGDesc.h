@@ -17,8 +17,8 @@ class SpritePCGLayerDesc : public cocos2d::Ref {
 public:
     enum class CellType {
         EMPTY,
-        SOLID,
         LAYER,
+        SOLID,
         INVALID = -1
     };
     typedef std::function<PixelDesc(CellType, size_t, size_t)> LayerColorF;
@@ -36,6 +36,7 @@ public:
     void generateData(std::vector<uint8_t>& data, cocos2d::Texture2D::PixelFormat fmt);
     std::vector<uint8_t> generateData(cocos2d::Texture2D::PixelFormat fmt);
     cocos2d::Texture2D* createTexture();
+    cocos2d::Sprite* createSprite();
 private:
     bool initFromLua(lua_State* L, int idx);
     CellTypeVec generateLayerData();
@@ -46,7 +47,6 @@ private:
     cocos2d::Size m_size;
     cocos2d::Vec2 m_position;
     cocos2d::Vec2 m_anchorPoint;
-    std::vector<CellT> m_cells;
     LayerDrawF m_drawF;
     LayerColorF m_colorF;
 };

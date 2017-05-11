@@ -26,6 +26,8 @@ GameManager* GameManager::getInstance() {
 }
 
 void GameManager::releaseInstance() {
+    auto sched = cocos2d::Director::getInstance()->getScheduler();
+    sched->unscheduleUpdate(m_instance);
     if (m_instance) {
         delete m_instance;
     }
@@ -43,9 +45,6 @@ void GameManager::start() {
     m_fileUtils->addSearchPath("res");
     auto wrPath = m_fileUtils->getWritablePath();
     m_fileUtils->addSearchPath(wrPath);
-
-    bool ok = m_collisionManager.init();
-    CCASSERT(ok, "Can't init collision manager");
 
     cocos2d::ScriptEngineManager::getInstance()->setScriptEngine(m_scriptEngine);
     auto luaPath = m_fileUtils->fullPathForFilename("lua");
@@ -68,6 +67,8 @@ void GameManager::start() {
     if (!entryScene) {
         entryScene = m_gameDesc->scenes.at(0);
     }
+    auto sched = cocos2d::Director::getInstance()->getScheduler();
+    sched->scheduleUpdate(this, std::numeric_limits<int>::min(), false);
     runScene(entryScene);
 }
 
@@ -132,7 +133,23 @@ void GameManager::writeStringToFile(
 
 float GameManager::getTime() {
     auto now = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<float, std::ratio<1, 1000>> ms = now - m_startTime;
-    return ms.count();
+    std::chrono::duration<float> ts = now - m_startTime;
+    return ts.count();
+}
+
+float GameManager::getFrameStartTime() const {
+    return m_frameStartTime;
+}
+
+void GameManager::update(float dt) {
+    m_frameStartTime = getTime();
+}
+
+void GameManager::setLevelLayer(LevelLayer* ll) {
+    m_currLevelLayer = ll;
+}
+
+LevelLayer* GameManager::getLevelLayer() {
+    return m_currLevelLayer;
 }
 

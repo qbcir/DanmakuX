@@ -3,7 +3,7 @@
 
 UDPSocket::UDPSocket(asio::io_service& io,
     const std::string &host,
-    ushort port,
+    unsigned short port,
     bool& stopFlag) :
     m_io(io),
     m_remoteHost(host),

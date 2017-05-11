@@ -78,7 +78,7 @@ void AlignComponent::update(float dt) {
         tgtRotation = -tgtRotation;
     }
     //cocos2d::log("tgtRotation=%f rotationSize=%f", tgtRotation, rotationSize);
-    owner->setAngularSpeed(tgtRotation);
+    owner->setAngularSpeed(-CC_DEGREES_TO_RADIANS(tgtRotation));
 }
 
 

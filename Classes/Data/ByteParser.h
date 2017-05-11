@@ -20,11 +20,21 @@ size_t dx_write_bytes(BytesT& buf, const T& v) {
 //
 template<typename T, DX_ENABLE_IF_IS_INT(T)>
 size_t dx_write_bytes(BytesT& buf, const T& v) {
+    uint8_t size = v < 0 ? 0x80 : 0;
+    size_t size_idx = buf.size();
+    T v_ = v < 0 ? -v : v;
+    buf.emplace_back(0);
     for (size_t i = 0; i < sizeof(T); ++i) {
-        const uint8_t byte = (v >> (i * 8)) & 0xFF;
+        const uint8_t byte = v_ & 0xFF;
         buf.emplace_back(byte);
+        v_ >>= 8;
+        if (v_ == 0) {
+            ++i; size |= i;
+            break;
+        }
     }
-    return sizeof(T);
+    buf.at(size_idx) = size;
+    return sizeof(T) + 1;
 }
 //
 template<typename E, DX_ENABLE_IF_IS_ENUM(E)>
@@ -46,10 +56,6 @@ size_t dx_write_bytes(BytesT& buf, const T& v) {
         int exp;
         mantissa = static_cast<int64_t>(std::frexp(v, &exp)*(uint64_t(1)<<digits));
         exponent = exp - digits;
-        // Compact the representation a bit by shifting off any low order bytes
-        // which are zero in the mantissa.  This makes the numbers in mantissa and
-        // exponent generally smaller which can make serialization and other things
-        // more efficient in some cases.
         for (int i = 0; i < 8 && ((mantissa & 0xFF) == 0); ++i) {
             mantissa >>= 8;
             exponent += 8;
@@ -121,9 +127,13 @@ DX_ENABLE_IF_IS_CLASS_TYPE(T) dx_read_bytes(uint8_t* &p) {
 template<typename T>
 DX_ENABLE_IF_IS_INT_TYPE(T) dx_read_bytes(uint8_t* &p) {
     T v = 0;
-    for (size_t i = 0; i < sizeof(T); ++i, ++p) {
+    auto size = *p; ++p;
+    bool is_neg = size & 0x80;
+    size &= 0xF;
+    for (size_t i = 0; i < size; ++i, ++p) {
         v |= ((*p) << (i * 8));
     }
+    if (is_neg) v = -v;
     return v;
 }
 //

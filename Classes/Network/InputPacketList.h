@@ -6,6 +6,9 @@
 
 class InputPacketList {
 public:
+    std::deque<InputPacket> &getInputPackets();
+    float getLastInputTimestamp() const;
+    void clear();
     bool add(const InputPacket& p);
     void removeProcessedInputs(float serverTimestamp);
 private:

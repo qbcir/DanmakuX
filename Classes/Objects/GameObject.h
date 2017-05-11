@@ -1,7 +1,8 @@
-#ifndef __danmakux_GameObject_h__
-#define __danmakux_GameObject_h__
+#ifndef __DX_GameObject_H__
+#define __DX_GameObject_H__
 
 #include "cocos2d.h"
+#include "Box2D/Box2D.h"
 
 enum class GameObjectType : uint8_t {
     GENERIC,
@@ -35,25 +36,32 @@ enum {
     GAME_OBJECT_PROP_MAX
 };
 
+struct GameObjectState {
+    cocos2d::Vec2 position;
+    float rotation;
+};
+
+class LevelLayer;
 class GameObjectDesc;
 class GameObject : public cocos2d::Node {
 public:
     static GameObject* createFromDesc(GameObjectDesc* desc);
     virtual ~GameObject();
     virtual void update(float dt);
-    virtual void readStateBytes(uint8_t* &p);
+    virtual GameObjectState readStateBytes(uint8_t* &p);
     virtual size_t writeStateBytes(std::vector<uint8_t> &buf);
+    virtual void setPosition(const cocos2d::Vec2& pos) override;
+    virtual void setPosition(float x, float y) override;
+    virtual void setRotation(float angle) override;
     void setOrientation(const cocos2d::Vec2& orientation);
     void setVelocity(const cocos2d::Vec2& vel);
-    void setAccel(const cocos2d::Vec2& accel);
     void applyAccel(const cocos2d::Vec2& accel);
     void setAngularSpeed(float rotation);
     void setSpeed(float speed);
     void setDirection(float direction);
     void changeDirection(float delta);
     cocos2d::Vec2 getOrientation() const;
-    const cocos2d::Vec2& getVelocity() const;
-    const cocos2d::Vec2& getAccel() const;
+    cocos2d::Vec2 getVelocity() const;
     float getAngVelocity() const;
     float getSpeed() const;
     virtual float getDirection() const;
@@ -83,12 +91,17 @@ public:
     bool isOnGrid() const;
     uint64_t getNetId() const;
     void setNetId(uint64_t netId);
+    void clientSideInterpolate(const GameObjectState& s);
+    b2Body* getPhysBody();
+    void setPhysBody(b2Body* body);
+    void setPhysWorld(b2World* world);
+    LevelLayer* getLevelLayer();
+    void setLevelLayer(LevelLayer* ll);
+    const std::string& getSpriteFilename() const;
 protected:
     bool initFromDesc(GameObjectDesc* desc);
     bool m_autoUpdateDirection = false;
-    float m_rotation = 0;
-    cocos2d::Vec2 m_velocity;
-    cocos2d::Vec2 m_accel;
+
     bool m_onGrid = true;
     bool m_paused = false;
     bool m_dead = false;
@@ -99,7 +112,16 @@ protected:
     std::unordered_map<GameObjectDesc*, float> m_prevDirection;
     float m_maxSpeed = std::numeric_limits<float>::max();
     float m_maxSpeedSquared = std::numeric_limits<float>::max();
+    //
     uint64_t m_netId = 0;
+    float m_timeOutOfSync;
+    //
+    b2Body* m_body = nullptr;
+    b2World* m_world = nullptr;
+    //
+    cocos2d::DrawNode* m_drawNode = nullptr;
+    cocos2d::Sprite* m_sprite = nullptr;
+    LevelLayer* m_levelLayer = nullptr;
 };
 
-#endif /* __danmakux_GameObject_h__ */
+#endif /* __DX_GameObject_H__ */

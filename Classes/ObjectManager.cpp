@@ -47,6 +47,7 @@
 DX_CREATE_DESC_FUNCS(ActionDesc, m_actionDescs)
 DX_CREATE_DESC_FUNCS(BulletDesc, m_bulletDescs)
 DX_CREATE_DESC_FUNCS(VehicleDesc, m_vehicleDescs)
+DX_CREATE_DESC_FUNCS(PlayerDesc, m_playerDescs)
 DX_CREATE_DESC_FUNCS(ParticleDesc, m_particleDescs)
 DX_CREATE_DESC_FUNCS(GameObjectDesc, m_objDescs)
 
@@ -62,7 +63,39 @@ void ObjectManager::clearDescriptions() {
 }
 
 PlayerDesc* ObjectManager::getPlayerDesc() {
-    return &m_playerDesc;
+    return m_playerDesc;
 }
+
+void ObjectManager::setPlayerDesc(PlayerDesc* playerDesc) {
+    CC_SAFE_RELEASE(m_playerDesc);
+    m_playerDesc = playerDesc;
+    CC_SAFE_RETAIN(m_playerDesc);
+}
+
+GameObject* ObjectManager::createObject(
+        const std::string& key,
+        GameObjectType objType) {
+    switch (objType) {
+        case GameObjectType::GENERIC: {
+            auto desc = getGameObjectDesc(key);
+            return desc ? GameObject::createFromDesc(desc) : nullptr;
+        }
+        case GameObjectType::VEHICLE: {
+            auto desc = getVehicleDesc(key);
+            return desc ? Vehicle::createFromDesc(desc) : nullptr;
+        }
+        case GameObjectType::BULLET: {
+            auto desc = getBulletDesc(key);
+            return desc ? Bullet::createFromDesc(desc) : nullptr;
+        }
+        case GameObjectType::PLAYER: {
+            auto desc = getPlayerDesc(key);
+            return desc ? PlayerObject::createFromDesc(desc) : nullptr;
+        }
+        default:;
+    }
+    return nullptr;
+}
+
 
 

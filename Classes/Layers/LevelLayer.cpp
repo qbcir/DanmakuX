@@ -1,10 +1,11 @@
 #include "LevelLayer.h"
 #include "../Data/LevelDesc.h"
-#include "GameManager.h"
-#include "CollisionManager.h"
-#include "ComponentManager.h"
+#include "../GameManager.h"
+#include "../CollisionManager.h"
+#include "../ComponentManager.h"
 #include "../Input/InputComponent.h"
 #include "../Objects/PlayerObject.h"
+#include "../Data/DataParser.h"
 #include "utils.h"
 
 LevelLayer* LevelLayer::createFromJson(const std::string& filename) {
@@ -17,31 +18,44 @@ LevelLayer* LevelLayer::createFromJson(const std::string& filename) {
     return nullptr;
 }
 
+LevelLayer::~LevelLayer() {
+    delete m_world;
+}
+
 bool LevelLayer::initWithLevelDesc(LevelDesc* levelDesc) {
-    // init collision grid
-    m_gridCellSize = cocos2d::Size(32, 32);
+    auto cm = CollisionManager::getInstance();
+    b2Vec2 gravity(0, 0);
+    m_debugDraw = cocos2d::DrawNode::create();
+    this->addChild(m_debugDraw, 4);
+    cm->setDrawNode(m_debugDraw);
+    m_world = new b2World(gravity);
+    m_world->SetContactListener(cm->getContactListener());
+    //auto dd = cm->getDebugDraw();
+    //dd->AppendFlags(b2Draw::e_shapeBit);
+    //m_world->SetDebugDraw(dd);
     m_winSize = cocos2d::Director::getInstance()->getWinSize();
-    m_gridSize = cocos2d::Size((m_winSize.width / m_gridCellSize.width) + 1,
-        (m_winSize.height / m_gridCellSize.height) + 1);
-    m_gridVecSize = m_gridSize.width * m_gridSize.height;
-    m_gridRect = cocos2d::Rect(0, 0, m_winSize.width, m_winSize.height);
     auto objMgr = ObjectManager::getInstance();
     auto playerObjDesc = objMgr->getPlayerDesc();
-    auto playerObj = PlayerObject::createFromDesc(playerObjDesc);
-    if (!playerObj) {
-        cocos2d::log("Can't create 'PlayerObject' from 'PlayerDesc'");
-        return false;
+    if (playerObjDesc) {
+        auto playerObj = PlayerObject::createFromDesc(playerObjDesc);
+        if (!playerObj) {
+            cocos2d::log("Can't create 'PlayerObject' from 'PlayerDesc'");
+            return false;
+        }
+        this->setPlayerObject(playerObj);
+        playerObj->setMinPos(0, 0);
+        playerObj->setMaxPos(m_winSize.width, m_winSize.height);
+        playerObj->setPosition(m_winSize.width/2, m_winSize.height/2);
+        auto compMgr = ComponentManager::getInstance();
+        compMgr->setPlayerObject(playerObj);
+    } else {
+        cocos2d::log("Player creation skipped");
     }
-    playerObj->setMinPos(m_gridRect.getMinX(), m_gridRect.getMinY());
-    playerObj->setMaxPos(m_gridRect.getMaxX(), m_gridRect.getMaxY());
-    playerObj->setPosition(m_winSize.width/2, m_winSize.height/2);
-    this->setPlayerObject(playerObj);
-    auto compMgr = ComponentManager::getInstance();
-    compMgr->setPlayerObject(playerObj);
     auto levelActionsDesc = levelDesc->getActions();
     m_levelAction = levelActionsDesc->getAction();
     CCASSERT(m_levelAction != nullptr, "Level 'main' action is null");
     this->runAction(m_levelAction);
+    m_lastTimestamp = GameManager::getInstance()->getTime();
     return true;
 }
 
@@ -57,16 +71,25 @@ bool LevelLayer::initFromJson(const std::string& filename) {
 }
 
 void LevelLayer::update(float dt) {
+    Layer::update(dt);
     if (m_paused) {
         return;
     }
-    resolveCollisions();
-    removeDeadObjects();
-    updateGrid();
-    removeOutOfGridObjects();
-    for (auto obj : m_objects) {
+    m_debugDraw->clear();
+    m_world->Step(1.f/60.f, 8, 3);
+    m_world->DrawDebugData();
+    for (GameObject* obj : m_objects) {
         obj->update(dt);
     }
+    removeDeadObjects();
+    removeOutOfGridObjects();
+    /*
+    auto gm = GameManager::getInstance();
+    auto curr = gm->getTime();
+    float delta = curr - m_lastTimestamp;
+
+    m_lastTimestamp = curr;
+    */
 }
 
 void LevelLayer::onExit() {
@@ -75,14 +98,41 @@ void LevelLayer::onExit() {
     Layer::onExit();
 }
 
+b2Body* LevelLayer::createPhysBody(GameObject* obj) {
+    b2BodyDef bodyDef;
+    bodyDef.type = b2_dynamicBody;
+    bodyDef.userData = (void*)obj;
+    auto phyBody = m_world->CreateBody(&bodyDef);
+    obj->setPhysBody(phyBody);
+    obj->setPhysWorld(m_world);
+    //
+    auto spName = obj->getSpriteFilename();
+    const auto& triangles = CollisionManager::getInstance()->getPolygonData(spName);
+    b2PolygonShape shape;
+    b2FixtureDef fixtureDef;
+    for (const auto& triangle : triangles) {
+        shape.Set(triangle.data(), triangle.size());
+        fixtureDef.isSensor = true;
+        fixtureDef.shape = &shape;
+        fixtureDef.userData = (void*)obj;
+        fixtureDef.filter.categoryBits = 1 << obj->getCollisionClass();
+        fixtureDef.filter.maskBits = obj->getCollisionMask();
+        phyBody->CreateFixture(&fixtureDef);
+    }
+    return phyBody;
+}
+
 void LevelLayer::addObject(GameObject* obj) {
-    this->addChild(obj);
+    this->addChild(obj, 1);
+    obj->unscheduleUpdate();
     m_objects.pushBack(obj);
+    obj->setLevelLayer(this);
 }
 
 void LevelLayer::setPlayerObject(PlayerObject* obj) {
     m_playerObj = obj;
     m_playerObj->retain();
+    this->createPhysBody(obj);
     this->addObject(obj);
 }
 
@@ -90,58 +140,11 @@ PlayerObject* LevelLayer::getPlayerObject() {
     return m_playerObj;
 }
 
-
-
 bool LevelLayer::isOutOfGrid(float x, float y) {
     return x < 0 || x > m_winSize.width || y < 0 || y > m_winSize.height;
 }
 
-size_t LevelLayer::positionToGridIndex(float x, float y) {
-    auto ix = x / m_gridCellSize.width;
-    auto iy = y / m_gridCellSize.height;
-    return iy * m_gridSize.width + ix;
-}
-
-void LevelLayer::updateGrid() {
-    LevelGridT updatedGrid(m_gridVecSize);
-    for (GameObject* obj : m_objects) {
-        cocos2d::Rect bbox = cocos2d::utils::getCascadeBoundingBox(obj);
-        int x = bbox.origin.x / m_gridCellSize.width;
-        int y = bbox.origin.y / m_gridCellSize.height;
-        int w = std::ceil(bbox.size.width / m_gridCellSize.width);
-        int h = std::ceil(bbox.size.height / m_gridCellSize.height);
-        if (!m_gridRect.intersectsRect(bbox)) {
-            obj->setOnGrid(false);
-            continue;
-        }
-        for (size_t i = 0; i < w; i++) {
-            for (size_t j = 0; j < h; j++) {
-                if (isOutOfGrid(x + i, y + j)) {
-                    continue;
-                }
-                int gidx = (y + j)* m_gridSize.width + (x + i);
-                updatedGrid.at(gidx).push_back(obj);
-            }
-        }
-    }
-    m_grid.swap(updatedGrid);
-}
-
 void LevelLayer::resolveCollisions() {
-    auto cMgr = CollisionManager::getInstance();
-    for (auto& gridCell : m_grid) {
-        for (size_t i = 0; i < gridCell.size(); i++) {
-            for (size_t j = i; j < gridCell.size(); j++) {
-                if (i == j) continue;
-                auto obj1 = gridCell[i];
-                auto obj2 = gridCell[j];
-                if (obj1->canCollideWith(obj2) || obj2->canCollideWith(obj1)) {
-                    cMgr->testCollision(obj1, obj2);
-                    //cMgr->sync();
-                }
-            }
-        }
-    }
 }
 
 void LevelLayer::removeDeadObjects() {
@@ -159,7 +162,8 @@ void LevelLayer::removeDeadObjects() {
 void LevelLayer::removeOutOfGridObjects() {
     cocos2d::Vector<GameObject*> liveObjects;
     for (GameObject* obj : m_objects) {
-        if (obj->isOnGrid()) {
+        auto bbox = cocos2d::utils::getCascadeBoundingBox(obj);
+        if (m_worldBounds.intersectsRect(bbox)) {
             liveObjects.pushBack(obj);
         } else {
             this->removeChild(obj);
@@ -196,3 +200,4 @@ void LevelLayer::resumeLevel() {
         resumeNode(obj);
     }
 }
+

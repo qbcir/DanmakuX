@@ -4,8 +4,7 @@
 #include "GameObject.h"
 
 class BulletDesc;
-class Bullet : public GameObject
-{
+class Bullet : public GameObject {
 public:
     static Bullet* createFromDesc(BulletDesc* desc);
     virtual ~Bullet();

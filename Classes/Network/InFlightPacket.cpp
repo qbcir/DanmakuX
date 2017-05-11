@@ -1,10 +1,12 @@
 #include "InFlightPacket.h"
+#include "../GameManager.h"
 #include <chrono>
 
 InFlightPacket::InFlightPacket(packet_seq_num_t seqNum) :
     m_seqNum(seqNum)
 {
-    m_timeDispatched = 0; // FIXME
+    auto gm = GameManager::getInstance();
+    m_timeDispatched = gm->getTime();
 }
 
 packet_seq_num_t InFlightPacket::getSeqNum() const {

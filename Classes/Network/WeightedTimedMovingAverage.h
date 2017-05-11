@@ -5,7 +5,10 @@
 
 class WeightedTimedMovingAverage {
 public:
-    void update(std::size_t nbytes);
+    WeightedTimedMovingAverage(float duration);
+    void init();
+    void update(float value);
+    float getValue() const;
 private:
     float m_lastEntryTime = 0;
     float m_value = 0;

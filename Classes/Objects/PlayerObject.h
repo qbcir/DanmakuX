@@ -4,11 +4,13 @@
 #include "Vehicle.h"
 #include "GameAction.h"
 
+class InputPacket;
 class PlayerDesc;
 class PlayerObject : public Vehicle {
 public:
     typedef std::function<void(cocos2d::Ref*)> OnPlayerDestroyCallback;
     static PlayerObject* createFromDesc(PlayerDesc* desc);
+    virtual GameObjectState readStateBytes(uint8_t* &p);
     ~PlayerObject();
     void update(float dt);
     void fire();
@@ -31,6 +33,7 @@ protected:
     OnPlayerDestroyCallback m_onPlayerDestroyCb;
     cocos2d::Vec2 m_minPos;
     cocos2d::Vec2 m_maxPos;
+    InputPacket* m_lastInputPacket = nullptr;
 };
 
 #endif // PLAYER_H
